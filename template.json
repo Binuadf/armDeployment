@@ -151,7 +151,7 @@
             "type": "Microsoft.Synapse/workspaces/bigDataPools",
             "apiVersion": "2020-12-01",
             "name": "[concat(parameters('workspaces_taxidatasynapseworkspace_name'), '/TaxiSparkPool')]",
-            "location": "eastus",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Synapse/workspaces', parameters('workspaces_taxidatasynapseworkspace_name'))]"
             ],
@@ -174,8 +174,7 @@
                 "cacheSize": 0,
                 "dynamicExecutorAllocation": {
                     "enabled": false
-                },
-                "provisioningState": "Succeeded"
+                }                
             }
         },
         {
