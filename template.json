@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "workspaces_taxidatasynapseworkspace_name": {
-            "defaultValue": "armdeploytaxisynapse",
+            "defaultValue": "armdeploytaxxisynapse",
             "type": "String"
         },
 		"location": {
@@ -50,7 +50,7 @@
             "defaultValue": ""
         },
         "storageAccounts_sourcedatastorageaccount_name": {
-            "defaultValue": "deployarmsourcedata",
+            "defaultValue": "deployarmsourceedata",
             "type": "String"
         }
     },
