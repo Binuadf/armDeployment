@@ -8,7 +8,6 @@
         },
 		"location": {
 		  "type": "string",
-		  "defaultValue": "[resourceGroup().location]",
 		  "metadata": {
 			"description": "Location of the data factory. Currently, only East US, East US 2, and West Europe are supported."
 		  }
@@ -213,8 +212,6 @@
                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_sourcedatastorageaccount_name'))]"
             ],
             "properties": {
-                "defaultEncryptionScope": "$account-encryption-key",
-                "denyEncryptionScopeOverride": false,
                 "publicAccess": "None"
             }
         },
@@ -227,8 +224,6 @@
                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_sourcedatastorageaccount_name'))]"
             ],
             "properties": {
-                "defaultEncryptionScope": "$account-encryption-key",
-                "denyEncryptionScopeOverride": false,
                 "publicAccess": "None"
             }
         },
@@ -241,8 +236,6 @@
                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_sourcedatastorageaccount_name'))]"
             ],
             "properties": {
-                "defaultEncryptionScope": "$account-encryption-key",
-                "denyEncryptionScopeOverride": false,
                 "publicAccess": "None"
             }
         }
