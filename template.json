@@ -35,13 +35,6 @@
 			"description": "Name of the blob container in the Azure Storage account."
 		  }
 		},
-		"synapseDefaultBlobContainer": {
-		  "type": "string",
-		  "defaultValue": "synapsedefblobcontainer",
-		  "metadata": {
-			"description": "Name of the blob container in the Azure Storage account."
-		  }
-		},
 		"defaultDataLakeStorageFilesystemName": {
             "type": "string",
 			"defaultValue": "underlyingsynapsecontainer"
@@ -154,6 +147,37 @@
                 "collation": "SQL_Latin1_General_CP1_CI_AS"                
             }
         },
+		{
+            "type": "Microsoft.Synapse/workspaces/bigDataPools",
+            "apiVersion": "2020-12-01",
+            "name": "[concat(parameters('workspaces_taxidatasynapseworkspace_name'), '/TaxiSparkPool')]",
+            "location": "eastus",
+            "dependsOn": [
+                "[resourceId('Microsoft.Synapse/workspaces', parameters('workspaces_taxidatasynapseworkspace_name'))]"
+            ],
+            "properties": {
+                "sparkVersion": "2.4",
+                "nodeCount": 3,
+                "nodeSize": "Small",
+                "nodeSizeFamily": "MemoryOptimized",
+                "autoScale": {
+                    "enabled": false,
+                    "minNodeCount": 0,
+                    "maxNodeCount": 0
+                },
+                "autoPause": {
+                    "enabled": true,
+                    "delayInMinutes": 15
+                },
+                "isComputeIsolationEnabled": false,
+                "sessionLevelPackagesEnabled": true,
+                "cacheSize": 0,
+                "dynamicExecutorAllocation": {
+                    "enabled": false
+                },
+                "provisioningState": "Succeeded"
+            }
+        },
         {
             "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
             "apiVersion": "2021-01-01",
@@ -177,18 +201,6 @@
             "properties": {
                 "publicAccess": "None"
             }
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-            "apiVersion": "2021-01-01",
-            "name": "[concat(parameters('storageAccounts_sourcedatastorageaccount_name'), '/default/',parameters('synapseDefaultBlobContainer'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccounts_sourcedatastorageaccount_name'), 'default')]",
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_sourcedatastorageaccount_name'))]"
-            ],
-            "properties": {
-                "publicAccess": "None"
-            }
-        }
+        }        
     ]
 }
