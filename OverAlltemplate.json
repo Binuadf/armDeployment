@@ -193,8 +193,7 @@
                     "enabled": false
                 }                
             }
-        },
-        {
+        },{
             "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
             "apiVersion": "2021-01-01",
             "name": "[concat(parameters('storageAccounts_sourcedatastorageaccount_name'), '/default/',parameters('processBlobContainer'))]",
