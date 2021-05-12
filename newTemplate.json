@@ -54,7 +54,7 @@
 		  }
 		},
 		"storageAccounts_sourcedatastorageaccount_name": {
-            "defaultValue": "taxisourcestorage",
+            "defaultValue": "taxiisourcestorage",
             "type": "String"
         }
     },
