@@ -1,0 +1,695 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaces_taxidatasynapseworkspace_name": {
+            "defaultValue": "taxianalysissynapse",
+            "type": "String"
+        },
+		"location": {
+		  "type": "string",
+		  "defaultValue": "[resourceGroup().location]",
+		  "metadata": {
+			"description": "Location of the data factory. Currently, only East US, East US 2, and West Europe are supported."
+		  }
+		},
+		"sqlAdministratorLoginUser": {
+            "defaultValue": "sqladminuser"
+        },
+		"sqlAdministratorLoginPassword": {
+            "type": "secureString",
+            "defaultValue": ""
+        },
+		 "sqlPoolNameDedicated": {
+            "type": "string",
+			"defaultValue": "TaxiAnalysisNew"
+        },
+		"rawBlobContainer": {
+		  "type": "string",
+		  "defaultValue": "rawdatacontainer",
+		  "metadata": {
+			"description": "Name of the blob container in the Azure Storage account."
+		  }
+		},
+		"processBlobContainer": {
+		  "type": "string",
+		  "defaultValue": "processeddatacontainer",
+		  "metadata": {
+			"description": "Name of the blob container in the Azure Storage account."
+		  }
+		},
+		"defaultDataLakeStorageFilesystemName": {
+            "type": "string",
+			"defaultValue": "underlyingsynapsecontainer"
+        },
+		"managedResourceGroupName": {
+            "type": "string",
+            "defaultValue": ""
+        },
+		"factoryName": {
+		  "type": "string",
+		  "defaultValue": "adfinaboxfact",
+		  "metadata": {
+			"description": "Data Factory Name"
+		  }
+		},
+        "storageAccounts_sourcedatastorageaccount_name": {
+            "defaultValue": "deployarmtaxsourcedata",
+            "type": "String"
+        }
+    },
+    "variables": {
+		"defaultDataLakeStorageAccountUrl": "[concat('https://', parameters('storageAccounts_sourcedatastorageaccount_name'), '.dfs.core.windows.net')]",
+		"storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_sourcedatastorageaccount_name'))]",
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]",
+		"synapsePoolConStr1": "integrated security=False;encrypt=True;connection timeout=30;data source=",
+		"synapsePoolConStr2": ".sql.azuresynapse.net;initial catalog=",
+		"synapsePoolConStr3": ";user id=",
+		"synapsePoolConStr4": ";password="
+		 
+	},
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-01-01",
+            "name": "[parameters('storageAccounts_sourcedatastorageaccount_name')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_RAGRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "minimumTlsVersion": "TLS1_2",
+                "allowBlobPublicAccess": true,
+                "allowSharedKeyAccess": true,
+                "isHnsEnabled": true,
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [],
+                    "ipRules": [],
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "keyType": "Account",
+                            "enabled": true
+                        },
+                        "blob": {
+                            "keyType": "Account",
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            }
+        },
+        {
+            "type": "Microsoft.Synapse/workspaces",
+            "apiVersion": "2020-12-01",
+            "name": "[parameters('workspaces_taxidatasynapseworkspace_name')]",
+            "location": "[parameters('location')]",
+            "identity": {               
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "managedResourceGroupName":  "[parameters('managedResourceGroupName')]",
+                "defaultDataLakeStorage": {
+                    "accountUrl": "[variables('defaultDataLakeStorageAccountUrl')]",
+                    "filesystem": "[parameters('defaultDataLakeStorageFilesystemName')]"
+                },
+                "sqlAdministratorLogin": "[parameters('sqlAdministratorLoginUser')]",
+				"sqlAdministratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
+                "privateEndpointConnections": [],
+                "encryption": {}
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices",
+            "apiVersion": "2021-01-01",
+            "name": "[concat(parameters('storageAccounts_sourcedatastorageaccount_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_sourcedatastorageaccount_name'))]"
+            ],
+            "sku": {
+                "name": "Standard_RAGRS",
+                "tier": "Standard"
+            },
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                },
+                "deleteRetentionPolicy": {
+                    "enabled": false
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Synapse/workspaces/sqlPools",
+            "apiVersion": "2020-12-01",
+            "name": "[concat(parameters('workspaces_taxidatasynapseworkspace_name'),'/', parameters('sqlPoolNameDedicated'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Synapse/workspaces', parameters('workspaces_taxidatasynapseworkspace_name'))]"
+            ],
+            "sku": {
+                "name": "DW100c",
+                "capacity": 0
+            },
+            "properties": {
+                "maxSizeBytes": 263882790666240,
+                "collation": "SQL_Latin1_General_CP1_CI_AS"                
+            }
+        },
+		{
+            "type": "Microsoft.Synapse/workspaces/bigDataPools",
+            "apiVersion": "2020-12-01",
+            "name": "[concat(parameters('workspaces_taxidatasynapseworkspace_name'), '/TaxiSparkPool')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Synapse/workspaces', parameters('workspaces_taxidatasynapseworkspace_name'))]"
+            ],
+            "properties": {
+                "sparkVersion": "2.4",
+                "nodeCount": 3,
+                "nodeSize": "Small",
+                "nodeSizeFamily": "MemoryOptimized",
+                "autoScale": {
+                    "enabled": false,
+                    "minNodeCount": 0,
+                    "maxNodeCount": 0
+                },
+                "autoPause": {
+                    "enabled": true,
+                    "delayInMinutes": 15
+                },
+                "isComputeIsolationEnabled": false,
+                "sessionLevelPackagesEnabled": true,
+                "cacheSize": 0,
+                "dynamicExecutorAllocation": {
+                    "enabled": false
+                }                
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "2021-01-01",
+            "name": "[concat(parameters('storageAccounts_sourcedatastorageaccount_name'), '/default/',parameters('processBlobContainer'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccounts_sourcedatastorageaccount_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_sourcedatastorageaccount_name'))]"
+            ],
+            "properties": {
+                "publicAccess": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "2021-01-01",
+            "name": "[concat(parameters('storageAccounts_sourcedatastorageaccount_name'), '/default/',parameters('rawBlobContainer'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccounts_sourcedatastorageaccount_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_sourcedatastorageaccount_name'))]"
+            ],
+            "properties": {
+                "publicAccess": "None"
+            }
+        },
+		-- ADF Starts Here
+		{
+		  "type": "Microsoft.DataFactory/factories",
+		  "apiVersion": "2018-06-01",
+		  "name": "[parameters('factoryName')]",
+		  "location": "[parameters('location')]",
+		  "properties": {},
+		  "identity": {
+			"type": "SystemAssigned"
+			},
+		"resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/AzureDataLakeStorageGen2')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                    "url": "[variables('defaultDataLakeStorageAccountUrl')]",
+                    "accountKey": {
+                        "type": "SecureString",
+                        "value": "[concat('',listKeys(variables('storageAccountId'), '2019-06-01').keys[0].value)]"
+                    }
+                }
+            },
+            "dependsOn": [
+			"[parameters('storageAccounts_sourcedatastorageaccount_name')]",
+			"[parameters('factoryName')]"
+			]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/AzureSynapseAnalytics')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureSqlDW",
+                "typeProperties": {
+			"connectionString": "[concat(variables('synapsePoolConStr1'),parameters('workspaces_taxidatasynapseworkspace_name'),
+			variables('synapsePoolConStr2'),parameters('sqlPoolNameDedicated'),variables('synapsePoolConStr3'),
+			parameters('sqlAdministratorLoginUser'),variables('synapsePoolConStr4'),parameters('sqlAdministratorLoginPassword')
+			)]"
+                }
+            },
+            "dependsOn": [
+			"[parameters('factoryName')]",
+			"[concat(parameters('workspaces_taxidatasynapseworkspace_name'),'/', parameters('sqlPoolNameDedicated'))]"
+			]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ProcessTaxiData')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Copy Payment Type Data",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "DelimitedTextSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "DelimitedTextSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextWriteSettings",
+                                    "quoteAllText": true,
+                                    "fileExtension": ".txt"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "PaymentType",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "copiedPaymentType",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Copy Trip Details",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "DelimitedTextSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "DelimitedTextSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextWriteSettings",
+                                    "quoteAllText": true,
+                                    "fileExtension": ".txt"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "TripDetails",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "FinalTripDetails",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ]
+                    },
+                    {
+                        "name": "TransformAndAggregate",
+                        "type": "ExecuteDataFlow",
+                        "dependsOn": [
+                            {
+                                "activity": "Copy Payment Type Data",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            },
+                            {
+                                "activity": "Copy Trip Details",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataflow": {
+                                "referenceName": "TransformFlow1",
+                                "type": "DataFlowReference",
+                                "parameters": {},
+                                "datasetParameters": {
+                                    "PaymentTypeDimension": {},
+                                    "tripDetailsFact": {},
+                                    "PushToSynapse": {}
+                                }
+                            },
+                            "staging": {},
+                            "compute": {
+                                "coreCount": 8,
+                                "computeType": "General"
+                            },
+                            "traceLevel": "Fine"
+                        }
+                    }
+                ],
+                "annotations": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/PaymentType')]",
+                "[concat(variables('factoryId'), '/datasets/copiedPaymentType')]",
+                "[concat(variables('factoryId'), '/datasets/TripDetails')]",
+                "[concat(variables('factoryId'), '/datasets/FinalTripDetails')]",
+                "[concat(variables('factoryId'), '/dataflows/TransformFlow1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PaymentType')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "AzureDataLakeStorageGen2",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "PaymentType.csv",
+                        "folderPath": "rawdirectory",
+                        "fileSystem": "rawdatacontainer"
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": true,
+                    "quoteChar": "\""
+                },
+                "schema": [
+                    {
+                        "name": "PaymentTypeId",
+                        "type": "String"
+                    },
+                    {
+                        "name": "PaymentType",
+                        "type": "String"
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorageGen2')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/copiedPaymentType')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "AzureDataLakeStorageGen2",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "finalPaymentType.csv",
+                        "folderPath": "processeddirectory",
+                        "fileSystem": "processeddatacontainer"
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": true,
+                    "quoteChar": "\""
+                },
+                "schema": [
+                    {
+                        "name": "PaymentTypeId",
+                        "type": "String"
+                    },
+                    {
+                        "name": "PaymentType",
+                        "type": "String"
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorageGen2')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/TripDetails')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "AzureDataLakeStorageGen2",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "TripDetails.csv",
+                        "folderPath": "rawdirectory",
+                        "fileSystem": "rawdatacontainer"
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": true,
+                    "quoteChar": "\""
+                },
+                "schema": [
+                    {
+                        "name": "TripId",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Distance",
+                        "type": "String"
+                    },
+                    {
+                        "name": "PaymentTypeId",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Fare",
+                        "type": "String"
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorageGen2')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/FinalTripDetails')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "AzureDataLakeStorageGen2",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "finalTripDetails.csv",
+                        "folderPath": "processeddirectory",
+                        "fileSystem": "processeddatacontainer"
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": true,
+                    "quoteChar": "\""
+                },
+                "schema": [
+                    {
+                        "name": "TripId",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Distance",
+                        "type": "String"
+                    },
+                    {
+                        "name": "PaymentTypeId",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Fare",
+                        "type": "String"
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorageGen2')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/TransformFlow1')]",
+            "type": "Microsoft.DataFactory/factories/dataflows",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "MappingDataFlow",
+                "typeProperties": {
+                    "sources": [
+                        {
+                            "dataset": {
+                                "referenceName": "copiedPaymentType",
+                                "type": "DatasetReference"
+                            },
+                            "name": "PaymentTypeDimension"
+                        },
+                        {
+                            "dataset": {
+                                "referenceName": "FinalTripDetails",
+                                "type": "DatasetReference"
+                            },
+                            "name": "tripDetailsFact"
+                        }
+                    ],
+                    "sinks": [
+                        {
+                            "dataset": {
+                                "referenceName": "AzureSynapseAnalyticsTable1",
+                                "type": "DatasetReference"
+                            },
+                            "name": "PushToSynapse"
+                        }
+                    ],
+                    "transformations": [
+                        {
+                            "name": "GetPayementTypeJoin"
+                        },
+                        {
+                            "name": "AggregatedTripDetails"
+                        }
+                    ],
+                    "script": "source(output(\n\t\tPaymentTypeId as string,\n\t\tPaymentType as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false) ~> PaymentTypeDimension\nsource(output(\n\t\tTripId as string,\n\t\tDistance as string,\n\t\tPaymentTypeId as string,\n\t\tFare as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false) ~> tripDetailsFact\nPaymentTypeDimension, tripDetailsFact join(PaymentTypeDimension@PaymentTypeId == tripDetailsFact@PaymentTypeId,\n\tjoinType:'inner',\n\tbroadcast: 'auto')~> GetPayementTypeJoin\nGetPayementTypeJoin aggregate(groupBy(PaymentType),\n\tTotalDistannce = sum(toInteger(Distance)),\n\t\tAverageFare = avg(toInteger(Fare))) ~> AggregatedTripDetails\nAggregatedTripDetails sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\trecreate:true,\n\tformat: 'table',\n\tstaged: false,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> PushToSynapse"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/copiedPaymentType')]",
+                "[concat(variables('factoryId'), '/datasets/FinalTripDetails')]",
+                "[concat(variables('factoryId'), '/datasets/AzureSynapseAnalyticsTable1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/AzureSynapseAnalyticsTable1')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "AzureSynapseAnalytics",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlDWTable",
+                "schema": [],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "TaxiDataAnalysis"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/AzureSynapseAnalytics')]"
+            ]
+        }
+    ]
+		}
+		-- ADF Ends Here
+        
+    ]
+}
