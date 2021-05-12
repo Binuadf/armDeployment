@@ -218,7 +218,6 @@
                 "publicAccess": "None"
             }
         },
-		-- ADF Starts Here
 		{
 		  "type": "Microsoft.DataFactory/factories",
 		  "apiVersion": "2018-06-01",
@@ -689,7 +688,6 @@
         }
     ]
 		}
-		-- ADF Ends Here
-        
+		
     ]
 }
