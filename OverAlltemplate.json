@@ -53,23 +53,7 @@
 			"description": "Data Factory Name"
 		  }
 		},
-		"synapsePoolConStr1": {
-            "type": "string",
-            "defaultValue": "integrated security=False;encrypt=True;connection timeout=30;data source="
-        },
-		"synapsePoolConStr2": {
-            "type": "string",
-            "defaultValue": ".sql.azuresynapse.net;initial catalog="
-        },
-		"synapsePoolConStr3": {
-            "type": "string",
-            "defaultValue": ";user id="
-        },
-		"synapsePoolConStr4": {
-            "type": "string",
-            "defaultValue": ";password="
-        },
-        "storageAccounts_sourcedatastorageaccount_name": {
+		"storageAccounts_sourcedatastorageaccount_name": {
             "defaultValue": "deployarmtaxsourcedata",
             "type": "String"
         }
@@ -266,10 +250,7 @@
                 "annotations": [],
                 "type": "AzureSqlDW",
                 "typeProperties": {
-			"connectionString":"[concat('',parameters('synapsePoolConStr1'),parameters('workspaces_taxidatasynapseworkspace_name'),
-			parameters('synapsePoolConStr2'),parameters('sqlPoolNameDedicated'),parameters('synapsePoolConStr3'),
-			parameters('sqlAdministratorLoginUser'),parameters('synapsePoolConStr4'),parameters('sqlAdministratorLoginPassword')
-			)]"
+					"connectionString": "[concat('integrated security=False;encrypt=True;connection timeout=30;data source=',parameters('workspaces_taxidatasynapseworkspace_name'),'.sql.azuresynapse.net;initial catalog=',parameters('sqlPoolNameDedicated'),';user id=',parameters('sqlAdministratorLoginUser'),';password=',parameters('sqlAdministratorLoginPassword')]"
                 }
             },
             "dependsOn": [
