@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "workspaces_taxidatasynapseworkspace_name": {
-            "defaultValue": "taxianalysissynapse",
+            "defaultValue": "armdeploytaxsynapse",
             "type": "String"
         },
 		"location": {
@@ -13,16 +13,13 @@
 			"description": "Location of the data factory. Currently, only East US, East US 2, and West Europe are supported."
 		  }
 		},
-		"sqlAdministratorLoginUser": {
-            "defaultValue": "sqladminuser"
-        },
 		"sqlAdministratorLoginPassword": {
             "type": "secureString",
             "defaultValue": ""
         },
 		 "sqlPoolNameDedicated": {
             "type": "string",
-			"defaultValue": "TaxiAnalysisNew"
+			"defaultValue": "TaxiAnalysis"
         },
 		"rawBlobContainer": {
 		  "type": "string",
@@ -46,22 +43,13 @@
             "type": "string",
             "defaultValue": ""
         },
-		"factoryName": {
-		  "type": "string",
-		  "defaultValue": "adfinaboxfact",
-		  "metadata": {
-			"description": "Data Factory Name"
-		  }
-		},
-		"storageAccounts_sourcedatastorageaccount_name": {
+        "storageAccounts_sourcedatastorageaccount_name": {
             "defaultValue": "deployarmtaxsourcedata",
             "type": "String"
         }
     },
     "variables": {
-		"defaultDataLakeStorageAccountUrl": "[concat('https://', parameters('storageAccounts_sourcedatastorageaccount_name'), '.dfs.core.windows.net')]",
-		"storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_sourcedatastorageaccount_name'))]",
-		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"		 
+		"defaultDataLakeStorageAccountUrl": "[concat('https://', parameters('storageAccounts_sourcedatastorageaccount_name'), '.dfs.core.windows.net')]"
 	},
     "resources": [
         {
@@ -116,7 +104,7 @@
                     "accountUrl": "[variables('defaultDataLakeStorageAccountUrl')]",
                     "filesystem": "[parameters('defaultDataLakeStorageFilesystemName')]"
                 },
-                "sqlAdministratorLogin": "[parameters('sqlAdministratorLoginUser')]",
+                "sqlAdministratorLogin": "sqladminuser",
 				"sqlAdministratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
                 "privateEndpointConnections": [],
                 "encryption": {}
@@ -212,6 +200,6 @@
             "properties": {
                 "publicAccess": "None"
             }
-        }		
+        }        
     ]
 }
