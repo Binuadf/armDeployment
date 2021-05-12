@@ -53,6 +53,22 @@
 			"description": "Data Factory Name"
 		  }
 		},
+		"synapsePoolConStr1": {
+            "type": "string",
+            "defaultValue": "integrated security=False;encrypt=True;connection timeout=30;data source="
+        },
+		"synapsePoolConStr2": {
+            "type": "string",
+            "defaultValue": ".sql.azuresynapse.net;initial catalog="
+        },
+		"synapsePoolConStr3": {
+            "type": "string",
+            "defaultValue": ";user id="
+        },
+		"synapsePoolConStr4": {
+            "type": "string",
+            "defaultValue": ";password="
+        },
         "storageAccounts_sourcedatastorageaccount_name": {
             "defaultValue": "deployarmtaxsourcedata",
             "type": "String"
@@ -61,12 +77,7 @@
     "variables": {
 		"defaultDataLakeStorageAccountUrl": "[concat('https://', parameters('storageAccounts_sourcedatastorageaccount_name'), '.dfs.core.windows.net')]",
 		"storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_sourcedatastorageaccount_name'))]",
-		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]",
-		"synapsePoolConStr1": "[concat('','integrated security=False;encrypt=True;connection timeout=30;data source=')]",
-		"synapsePoolConStr2": "[concat('','.sql.azuresynapse.net;initial catalog=')]",
-		"synapsePoolConStr3": "[concat('',';user id=')]",
-		"synapsePoolConStr4": "[concat('',';password=')]"
-		 
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"		 
 	},
     "resources": [
         {
@@ -255,10 +266,9 @@
                 "annotations": [],
                 "type": "AzureSqlDW",
                 "typeProperties": {
-			"connectionString":
-			"[concat(variables('synapsePoolConStr1'),parameters('workspaces_taxidatasynapseworkspace_name'),
-			variables('synapsePoolConStr2'),parameters('sqlPoolNameDedicated'),variables('synapsePoolConStr3'),
-			parameters('sqlAdministratorLoginUser'),variables('synapsePoolConStr4'),parameters('sqlAdministratorLoginPassword')
+			"connectionString":"[concat('',parameters('synapsePoolConStr1'),parameters('workspaces_taxidatasynapseworkspace_name'),
+			parameters('synapsePoolConStr2'),parameters('sqlPoolNameDedicated'),parameters('synapsePoolConStr3'),
+			parameters('sqlAdministratorLoginUser'),parameters('synapsePoolConStr4'),parameters('sqlAdministratorLoginPassword')
 			)]"
                 }
             },
