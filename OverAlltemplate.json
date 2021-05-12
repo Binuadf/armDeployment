@@ -193,7 +193,8 @@
                     "enabled": false
                 }                
             }
-        },{
+        },
+        {
             "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
             "apiVersion": "2021-01-01",
             "name": "[concat(parameters('storageAccounts_sourcedatastorageaccount_name'), '/default/',parameters('processBlobContainer'))]",
@@ -216,8 +217,7 @@
             "properties": {
                 "publicAccess": "None"
             }
-        },
-		{
+        },{
 		  "type": "Microsoft.DataFactory/factories",
 		  "apiVersion": "2018-06-01",
 		  "name": "[parameters('factoryName')]",
@@ -685,8 +685,7 @@
                 "[concat(variables('factoryId'), '/linkedServices/AzureSynapseAnalytics')]"
             ]
         }
-    ]
-		}
+    ]		}
 		
     ]
 }
