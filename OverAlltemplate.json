@@ -62,10 +62,10 @@
 		"defaultDataLakeStorageAccountUrl": "[concat('https://', parameters('storageAccounts_sourcedatastorageaccount_name'), '.dfs.core.windows.net')]",
 		"storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_sourcedatastorageaccount_name'))]",
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]",
-		"synapsePoolConStr1": "integrated security=False;encrypt=True;connection timeout=30;data source=",
-		"synapsePoolConStr2": ".sql.azuresynapse.net;initial catalog=",
-		"synapsePoolConStr3": ";user id=",
-		"synapsePoolConStr4": ";password="
+		"synapsePoolConStr1": "[concat('','integrated security=False;encrypt=True;connection timeout=30;data source=')]",
+		"synapsePoolConStr2": "[concat('','.sql.azuresynapse.net;initial catalog=')]",
+		"synapsePoolConStr3": "[concat('',';user id=')]",
+		"synapsePoolConStr4": "[concat('',';password=')]"
 		 
 	},
     "resources": [
@@ -255,7 +255,8 @@
                 "annotations": [],
                 "type": "AzureSqlDW",
                 "typeProperties": {
-			"connectionString": "[concat(variables('synapsePoolConStr1'),parameters('workspaces_taxidatasynapseworkspace_name'),
+			"connectionString":
+			"[concat(variables('synapsePoolConStr1'),parameters('workspaces_taxidatasynapseworkspace_name'),
 			variables('synapsePoolConStr2'),parameters('sqlPoolNameDedicated'),variables('synapsePoolConStr3'),
 			parameters('sqlAdministratorLoginUser'),variables('synapsePoolConStr4'),parameters('sqlAdministratorLoginPassword')
 			)]"
