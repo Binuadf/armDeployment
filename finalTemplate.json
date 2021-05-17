@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "workspaces_taxidatasynapseworkspace_name": {
-            "defaultValue": "taxianalysissynapse",
+            "defaultValue": "taxianalysissynapses",
             "type": "String"
         },
 		"location": {
@@ -45,17 +45,17 @@
         },
 		"managedResourceGroupName": {
             "type": "string",
-            "defaultValue": "mrgns"
+            "defaultValue": "mrgnss"
         },
 		"factoryName": {
 		  "type": "string",
-		  "defaultValue": "adfinaboxfact",
+		  "defaultValue": "adfinaboxfactt",
 		  "metadata": {
 			"description": "Data Factory Name"
 		  }
 		},
 		"storageAccounts_sourcedatastorageaccount_name": {
-            "defaultValue": "taxiidatastore",
+            "defaultValue": "taxydatastore",
             "type": "String"
         }
     },
@@ -254,8 +254,8 @@
                 "annotations": [],
                 "type": "AzureSqlDW",
                 "typeProperties": {
-					"connectionString": "abc"
-                }
+					"connectionString": "[concat('integrated security=False;encrypt=True;connection timeout=30;data source=',parameters('workspaces_taxidatasynapseworkspace_name'),'.sql.azuresynapse.net;initial catalog=',parameters('sqlPoolNameDedicated'),';user id=',parameters('sqlAdministratorLoginUser'),';password=',parameters('sqlAdministratorLoginPassword'))]"
+					}
             },
             "dependsOn": [
 			"[parameters('factoryName')]"
