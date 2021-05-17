@@ -143,6 +143,18 @@
                 }
             }
         },
+		{
+            "type": "Microsoft.Synapse/workspaces/firewallRules",
+            "apiVersion": "2020-12-01",
+            "name": "[concat(parameters('workspaces_taxidatasynapseworkspace_name'), '/allowAll')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Synapse/workspaces', parameters('workspaces_taxidatasynapseworkspace_name'))]"
+            ],
+            "properties": {
+                "startIpAddress": "0.0.0.0",
+                "endIpAddress": "255.255.255.255"
+            }
+        },
         {
             "type": "Microsoft.Synapse/workspaces/sqlPools",
             "apiVersion": "2020-12-01",
