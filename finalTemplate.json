@@ -14,11 +14,12 @@
 		  }
 		},
 		"sqlAdministratorLoginUser": {
-            "defaultValue": "sqladminuser"
+            "defaultValue": "sqladminuser",
+			"type": "String"
         },
 		"sqlAdministratorLoginPassword": {
             "type": "secureString",
-            "defaultValue": ""
+            "defaultValue": "qwer123+"
         },
 		 "sqlPoolNameDedicated": {
             "type": "string",
@@ -44,7 +45,7 @@
         },
 		"managedResourceGroupName": {
             "type": "string",
-            "defaultValue": ""
+            "defaultValue": "mrgns"
         },
 		"factoryName": {
 		  "type": "string",
@@ -218,8 +219,7 @@
 		  "name": "[parameters('factoryName')]",
 		  "location": "[parameters('location')]",
 		  "dependsOn": [
-		  "[parameters('storageAccounts_sourcedatastorageaccount_name')]",
-		   "[resourceId('Microsoft.Synapse/workspaces/sqlPools', parameters('sqlPoolNameDedicated'))]"
+		  "[parameters('storageAccounts_sourcedatastorageaccount_name')]"		   
 		  ],
 		  "properties": {},
 		  "identity": {
@@ -435,7 +435,8 @@
                 "annotations": []
             },
             "dependsOn": [
-                "[concat(variables('factoryId'), '/datasets/PaymentType')]",
+                "[concat(variables('factoryId'), '')]",
+				"[concat(variables('factoryId'), '/datasets/PaymentType')]",
                 "[concat(variables('factoryId'), '/datasets/copiedPaymentType')]",
                 "[concat(variables('factoryId'), '/datasets/TripDetails')]",
                 "[concat(variables('factoryId'), '/datasets/FinalTripDetails')]",
@@ -477,6 +478,7 @@
                 ]
             },
             "dependsOn": [
+			    "[concat(variables('factoryId'), '')]",
                 "[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorageGen2')]"
             ]
         },
@@ -515,6 +517,7 @@
                 ]
             },
             "dependsOn": [
+				"[concat(variables('factoryId'), '')]",
                 "[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorageGen2')]"
             ]
         },
@@ -561,6 +564,7 @@
                 ]
             },
             "dependsOn": [
+				"[concat(variables('factoryId'), '')]",
                 "[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorageGen2')]"
             ]
         },
@@ -607,6 +611,7 @@
                 ]
             },
             "dependsOn": [
+				"[concat(variables('factoryId'), '')]",
                 "[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorageGen2')]"
             ]
         },
@@ -654,6 +659,7 @@
                 }
             },
             "dependsOn": [
+				"[concat(variables('factoryId'), '')]",
                 "[concat(variables('factoryId'), '/datasets/copiedPaymentType')]",
                 "[concat(variables('factoryId'), '/datasets/FinalTripDetails')]",
                 "[concat(variables('factoryId'), '/datasets/AzureSynapseAnalyticsTable1')]"
@@ -677,6 +683,7 @@
                 }
             },
             "dependsOn": [
+				"[concat(variables('factoryId'), '')]",
                 "[concat(variables('factoryId'), '/linkedServices/AzureSynapseAnalytics')]"
             ]
         }
